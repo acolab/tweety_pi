@@ -2,15 +2,19 @@
 # -*- coding: utf-8 -*-#
 import twitter
 import os
-import sys
-import subprocess
+#import sys
+#import subprocess
 import pprint
+import time
+import itertools
+from threading import Thread
 
+from rgbmatrix import RGBMatrix
 from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
 
-def tweety_pi(keywords=["Cabu"]):
+def tweety_pi(keywords=["acolab"], myMatrix):
     """Follow list of keywords on Twitter and display it on led display"""
     pp = pprint.PrettyPrinter(indent=4)
     #Twitter key needed to connect to Twitter API
@@ -31,8 +35,10 @@ def tweety_pi(keywords=["Cabu"]):
                                                       count=1)
     
     #Display the latest tweet text
-    display_led(latest['statuses'][0]['user']['screen_name'] + 
+    image = create_image(latest['statuses'][0]['user']['screen_name'] + 
                        " : " + latest['statuses'][0]['text'])
+    thread_display = display_image(image, myMatrix)
+    thread_display.start()
 
     #Connect to the Stream Twitter API
     twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
@@ -40,18 +46,17 @@ def tweety_pi(keywords=["Cabu"]):
     #Iter over tweet stream containing hashtag
     for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
         if 'text' in msg:
-            display_led(msg['user']['screen_name'] + " : " + msg['text'])
+            thread_display.stop()
+            image = create_image(msg['user']['screen_name'] + " : " + msg['text'])
+            thread_display = display_image(image, myMatrix)
+            thread_display.start()
         print "Waiting for Tweet"
+        
 
-def display_led(text):
+def create_image(text):
     """Create an image corresponding to text and pass it as argument to 
     led-matrix software."""
     font = ImageFont.truetype("/usr/share/fonts/truetype/droid/DroidSans.ttf", 14)
-#    #Find the PID of the process, if it exist, and return it
-#    PID = subprocess.check_output("pidof led-matrix", shell=True).split(" ")[0]
-#    if PID:
-#        print "Kill process : ", PID
-#        os.system("kill " + PID)
     print "Tweet arrived : ", text
     width, ignore = font.getsize(text)
 
@@ -100,10 +105,42 @@ def display_led(text):
 
     #Paste the logo at the end of the picture
     im.paste(logo,(x + 5, 0))
-    
-    im.save("tweet.ppm")
+    return im
      
-#    os.system("./rpi-rgb-led-matrix/led-matrix -d -r16 -c3 -p11 -D1 tweet.ppm")
+class Display_Image(Thread):
+    
+    """ Thread displaying an image on the led matrix screen"""
+    
+    def __init__(self, image, myMatrix):
+        Thread.__init__(self)
+        self.im = image
+        self.myMatrix = myMatrix
+        self.Terminated = False
 
+    def run(self):
+        pix = im.load()
+        (image_width, image_height) = im.size
+        horizontal_position = 0
+        scroll_jumps = 1
+        scroll_ms = 30
+        offscreen = myMatrix.CreateFrameCanvas()
+        while not self.Terminated:
+            for x, y in itertools.product(range(image_width), range(image_height)):
+	            r, g, b = pix[(horizontal_position + x) % image_width, y]
+	            offscreen.SetPixel(x, y, r, g, b)
+            offscreen = myMatrix.SwapOnVSync(offscreen)
+            horizontal_position += scroll_jumps
+            if horizontal_position < 0:
+                horizontal_position = image_width
+            time.sleep(scroll_ms / 1000)
+    
+    def stop(self):
+        self.Terminated = True
+    
 if __name__ == '__main__':
-    tweety_pi(sys.argv[1:])
+    #Initiate led matrix screen size
+    rows = 16
+    chains = 3
+    parallel = 1
+    myMatrix = RGBMatrix(rows, chains, parallel)
+    tweety_pi(sys.argv[1:], myMatrix)
