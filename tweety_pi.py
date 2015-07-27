@@ -46,10 +46,8 @@ def tweety_pi(keywords=["acolab"], myMatrix):
     #Iter over tweet stream containing hashtag
     for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
         if 'text' in msg:
-            thread_display.stop()
             image = create_image(msg['user']['screen_name'] + " : " + msg['text'])
-            thread_display = display_image(image, myMatrix)
-            thread_display.start()
+            thread_display.load(image)
         print "Waiting for Tweet"
         
 
@@ -113,30 +111,38 @@ class Display_Image(Thread):
     
     def __init__(self, image, myMatrix):
         Thread.__init__(self)
-        self.im = image
+        self.load(image)
         self.myMatrix = myMatrix
         self.Terminated = False
+        self.new_image = False
 
     def run(self):
-        pix = im.load()
-        (image_width, image_height) = im.size
         horizontal_position = 0
         scroll_jumps = 1
         scroll_ms = 30
         offscreen = myMatrix.CreateFrameCanvas()
         while not self.Terminated:
-            for x, y in itertools.product(range(image_width), range(image_height)):
-	            r, g, b = pix[(horizontal_position + x) % image_width, y]
-	            offscreen.SetPixel(x, y, r, g, b)
+            for x, y in itertools.product(range(self.image_width), range(self.image_height)):
+                if self.new_image:
+                    x, y = (0, 0)
+                    horizontal_position = 0
+                    offscreen.Fill(0,0,0)
+                r, g, b = self.pix[(horizontal_position + x) % self.image_width, y]
+            offscreen.SetPixel(x, y, r, g, b)
             offscreen = myMatrix.SwapOnVSync(offscreen)
             horizontal_position += scroll_jumps
             if horizontal_position < 0:
-                horizontal_position = image_width
+                horizontal_position = self.image_width
             time.sleep(scroll_ms / 1000)
     
     def stop(self):
         self.Terminated = True
     
+    def load(self, image):
+        self.pix = image.load()
+        self.image_width, self.image_height = image.size
+        self.new_image = True
+
 if __name__ == '__main__':
     #Initiate led matrix screen size
     rows = 16
