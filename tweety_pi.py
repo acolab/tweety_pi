@@ -2,7 +2,7 @@
 # -*- coding: utf-8 -*-#
 import twitter
 import os
-#import sys
+import sys
 #import subprocess
 import pprint
 import time
@@ -14,9 +14,10 @@ from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
 
-def tweety_pi(keywords=["acolab"], myMatrix):
+pp = pprint.PrettyPrinter(indent=4)
+
+def tweety_pi(myMatrix, keywords=["acolab"]):
     """Follow list of keywords on Twitter and display it on led display"""
-    pp = pprint.PrettyPrinter(indent=4)
     #Twitter key needed to connect to Twitter API
     consumer_key="WiZrpKzslTQt3Y0vyIz1qhTeU"
     consumer_secret="Smzs6IoO684EjpRlOGHvTj9JbXjdPec1rIBlA6wdYjUS0hJNh2"
@@ -33,23 +34,23 @@ def tweety_pi(keywords=["acolab"], myMatrix):
     latest = twitter.Twitter(auth=auth).search.tweets(q=" ".join(keywords), 
                                                       result_type="recent", 
                                                       count=1)
-    
+    #pp.pprint(latest)
     #Display the latest tweet text
     image = create_image(latest['statuses'][0]['user']['screen_name'] + 
                        " : " + latest['statuses'][0]['text'])
-    thread_display = display_image(image, myMatrix)
+    thread_display = Display_Image(image, myMatrix)
     thread_display.start()
+    thread_display.join()
 
     #Connect to the Stream Twitter API
-    twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
-    print "Waiting for Tweet"
+#    twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
+#    print "Waiting for Tweet"
     #Iter over tweet stream containing hashtag
-    for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
-        if 'text' in msg:
-            image = create_image(msg['user']['screen_name'] + " : " + msg['text'])
-            thread_display.load(image)
-        print "Waiting for Tweet"
-        
+#    for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
+#        if 'text' in msg:
+#            image = create_image(msg['user']['screen_name'] + " : " + msg['text'])
+#            thread_display.load(image)
+#        print "Waiting for Tweet"
 
 def create_image(text):
     """Create an image corresponding to text and pass it as argument to 
@@ -122,24 +123,26 @@ class Display_Image(Thread):
         scroll_ms = 30
         offscreen = self.myMatrix.CreateFrameCanvas()
         while not self.Terminated:
-            for x, y in itertools.product(range(self.myMatrix.screen_width), range(self.myMatrix.screen_height)):
-                if self.new_image:
-                    x, y = (0, 0)
-                    horizontal_position = 0
-                    offscreen.Fill(0,0,0)
-                r, g, b = self.pix[(horizontal_position + x) % self.image_width, y]
-            offscreen.SetPixel(x, y, r, g, b)
+            for x, y in itertools.product(range(self.myMatrix.width), range(self.myMatrix.height)):
+                #if self.new_image:
+                #    x, y = (0, 0)
+                #    horizontal_position = 0
+                #    offscreen.Fill(0,0,0)
+                r, g, b = self.pix[(horizontal_position + x) % self.image_width + y * self.image_width]
+                offscreen.SetPixel(x, y, r, g, b)
+            #print "Update screen"
             offscreen = self.myMatrix.SwapOnVSync(offscreen)
             horizontal_position += scroll_jumps
             if horizontal_position < 0:
                 horizontal_position = self.image_width
-            time.sleep(scroll_ms / 1000)
+            #time.sleep(scroll_ms / 1000)
     
     def stop(self):
         self.Terminated = True
     
     def load(self, image):
-        self.pix = image.load()
+        self.pix = image.getdata()
+        #pp.pprint(list(image.getdata()))
         self.image_width, self.image_height = image.size
         self.new_image = True
 
@@ -149,4 +152,5 @@ if __name__ == '__main__':
     chains = 3
     parallel = 1
     myMatrix = RGBMatrix(rows, chains, parallel)
-    tweety_pi(sys.argv[1:], myMatrix)
+    myMatrix.pwmBits = 11
+    tweety_pi(myMatrix, sys.argv[1:])
