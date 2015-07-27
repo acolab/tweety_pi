@@ -120,16 +120,16 @@ class Display_Image(Thread):
         horizontal_position = 0
         scroll_jumps = 1
         scroll_ms = 30
-        offscreen = myMatrix.CreateFrameCanvas()
+        offscreen = self.myMatrix.CreateFrameCanvas()
         while not self.Terminated:
-            for x, y in itertools.product(range(self.image_width), range(self.image_height)):
+            for x, y in itertools.product(range(self.myMatrix.screen_width), range(self.myMatrix.screen_height)):
                 if self.new_image:
                     x, y = (0, 0)
                     horizontal_position = 0
                     offscreen.Fill(0,0,0)
                 r, g, b = self.pix[(horizontal_position + x) % self.image_width, y]
             offscreen.SetPixel(x, y, r, g, b)
-            offscreen = myMatrix.SwapOnVSync(offscreen)
+            offscreen = self.myMatrix.SwapOnVSync(offscreen)
             horizontal_position += scroll_jumps
             if horizontal_position < 0:
                 horizontal_position = self.image_width
