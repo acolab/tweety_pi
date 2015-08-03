@@ -14,10 +14,9 @@ from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
 
-pp = pprint.PrettyPrinter(indent=4)
-
 def tweety_pi(myMatrix, keywords=["acolab"]):
     """Follow list of keywords on Twitter and display it on led display"""
+    pp = pprint.PrettyPrinter(indent=4)
     #Twitter key needed to connect to Twitter API
     consumer_key="WiZrpKzslTQt3Y0vyIz1qhTeU"
     consumer_secret="Smzs6IoO684EjpRlOGHvTj9JbXjdPec1rIBlA6wdYjUS0hJNh2"
@@ -38,19 +37,22 @@ def tweety_pi(myMatrix, keywords=["acolab"]):
     #Display the latest tweet text
     image = create_image(latest['statuses'][0]['user']['screen_name'] + 
                        " : " + latest['statuses'][0]['text'])
+    print "Create Display Thread"
     thread_display = Display_Image(image, myMatrix)
+    print "Start the thread"
     thread_display.start()
-    thread_display.join()
 
     #Connect to the Stream Twitter API
-#    twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
-#    print "Waiting for Tweet"
+    twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
+    print "Waiting for Tweet"
     #Iter over tweet stream containing hashtag
-#    for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
-#        if 'text' in msg:
-#            image = create_image(msg['user']['screen_name'] + " : " + msg['text'])
-#            thread_display.load(image)
-#        print "Waiting for Tweet"
+    for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
+        if 'text' in msg:
+            image = create_image(msg['user']['screen_name'] + " : " + msg['text'])
+            print "Image created send to display"
+            thread_display.load(image)
+        print "Waiting for Tweet"
+        
 
 def create_image(text):
     """Create an image corresponding to text and pass it as argument to 
@@ -118,39 +120,31 @@ class Display_Image(Thread):
         self.new_image = False
 
     def run(self):
+        print "Thread started"
         horizontal_position = 0
         scroll_jumps = 1
         scroll_ms = 30
         offscreen = self.myMatrix.CreateFrameCanvas()
-        im_width = self.image_width
-        im_height = self.image_height
-        screen_width = self.myMatrix.width
-        screen_height = self.myMatrix.height
-        pixl = self.pix
-        while not self.Terminated:
-            start = time.time()
-            for x, y in itertools.product(range(screen_width), range(screen_height)):
-                #if self.new_image:
-                #    x, y = (0, 0)
-                #    horizontal_position = 0
-                #    offscreen.Fill(0,0,0)
-                r, g, b = pixl[(horizontal_position + x) % im_width + y * im_width]
-                #r, g, b = (0, 255, 0)
-                offscreen.SetPixel(x, y, r, g, b)
-            print "Parse Image rate: ? Hz", 1/(time.time()-start)
-            #print "Update screen"
+        
+while not self.Terminated:
+            for x, y in itertools.product(range(self.myMatrix.width), range(self.myMatrix.height)):
+                if self.new_image:
+                    x, y = (0, 0)
+                    horizontal_position = 0
+                    offscreen.Fill(0,0,0)
+                r, g, b = self.pix[(horizontal_position + x) % self.image_width, y]
+            offscreen.SetPixel(x, y, r, g, b)
             offscreen = self.myMatrix.SwapOnVSync(offscreen)
             horizontal_position += scroll_jumps
             if horizontal_position < 0:
-                horizontal_position = im_width
-            #time.sleep(scroll_ms / 1000)
+                horizontal_position = self.image_width
+            time.sleep(scroll_ms / 1000)
     
     def stop(self):
-        self.Terminated = 1
+        self.Terminated = True
     
     def load(self, image):
-        self.pix = list(image.getdata())
-        #pp.pprint(list(image.getdata()))
+        self.pix = image.load()
         self.image_width, self.image_height = image.size
         self.new_image = True
 
@@ -160,5 +154,4 @@ if __name__ == '__main__':
     chains = 3
     parallel = 1
     myMatrix = RGBMatrix(rows, chains, parallel)
-    myMatrix.pwmBits = 11
     tweety_pi(myMatrix, sys.argv[1:])

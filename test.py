@@ -2,6 +2,7 @@
 from rgbmatrix import RGBMatrix
 import time
 import itertools
+import random
 
 rows = 16
 chains = 3
@@ -10,13 +11,15 @@ myMatrix = RGBMatrix(rows, chains, parallel)
 myMatrix.pwmBits = 1
 myMatrix.luminanceCorrect = False
 offscreen = myMatrix.CreateFrameCanvas()
-for i in xrange(3):
-    for x,y in itertools.product(range(offscreen.width), range(offscreen.height)):
-        offscreen.SetPixel(x,y,255, 0, 0)
-        start = time.time()
+for i in xrange(10):
+    image = [(random.randint(0, 255),random.randint(0, 255),random.randint(0, 255)) for i in xrange(myMatrix.width*myMatrix.height)]
+    start = time.time()
+    screen_width = offscreen.width
+    screen_height = offscreen.height
+    setpixel = offscreen.SetPixel
+    #[r,g,b = image[x + y*screen_width] ; setpixel(x,y,r,g,b) for x,y in itertools.product(range(screen_width), range(screen_height))]
+    for x,y in itertools.product(range(screen_width), range(screen_height)):
+        r, g, b = image[x + y*screen_width]
+        setpixel(x,y,r, g, b)
     offscreen = myMatrix.SwapOnVSync(offscreen)
-    stop = time.time()
-    print stop-start
-    time.sleep(1)
-    myMatrix.Clear()
-    time.sleep(1)
+    print 1/(time.time()-start)
