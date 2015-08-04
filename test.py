@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+"""
+Mock-up to optimize image parsing in similar situation than actual one
+"""
 
 #Import module to handle led matrix display
 from rgbmatrix import RGBMatrix
@@ -30,7 +33,7 @@ for i in xrange(10):
     setpixel = offscreen.SetPixel
     #[r,g,b = image[x + y*screen_width] ; setpixel(x,y,r,g,b) for x,y in itertools.product(range(screen_width), range(screen_height))]
     
-    #Iterate over the image to get RGB value for a given x,y position
+    #Iterate over the image to get RGB value for a given x,y position - loop to optimize
     for x,y in itertools.product(range(screen_width), range(screen_height)):
         r, g, b = image[x + y*screen_width]
         setpixel(x,y,r, g, b)
