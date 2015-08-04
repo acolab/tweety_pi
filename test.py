@@ -1,6 +1,8 @@
 #!/usr/bin/env python
+
 #Import module to handle led matrix display
 from rgbmatrix import RGBMatrix
+
 import time
 import itertools
 import random
