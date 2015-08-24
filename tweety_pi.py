@@ -28,7 +28,7 @@ def tweety_pi(myMatrix, keywords, speed=1):
                          consumer_secret)
 
     #Get the lastest tweet containing keywords
-    latest = twitter.Twitter(auth=auth).search.tweets(q=" ".join(keywords), 
+    latest = twitter.Twitter(auth=auth).search.tweets(q=" OR ".join(keywords), 
                                                       result_type="recent", 
                                                       count=1)
     #Display the latest tweet text
@@ -144,8 +144,7 @@ if __name__ == '__main__':
     parallel = 1
     myMatrix = RGBMatrix(rows, chains, parallel)
     myMatrix.pwmBits = 11
-    with open('keywords.json') as data_file:    
-        jwords = json.load(data_file)
+    with open('config.json') as data_file:    
+        config = json.load(data_file)
     while 1:
-        for k in jwords:
-            tweety_pi(myMatrix, [k['keyword']], k['speed']) 
+        tweety_pi(myMatrix, config["keywords"], config['speed']) 
