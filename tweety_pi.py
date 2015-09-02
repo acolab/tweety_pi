@@ -1,25 +1,27 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-#
+import twitter
+import os
+import sys
+import subprocess
+import pprint
+import json
 
 import sys
 reload(sys)
 sys.setdefaultencoding('utf8')
 
-import twitter
-import os
-import sys
-import time
-import itertools
-from threading import Thread
-import json
-
-from rgbmatrix import RGBMatrix
 from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
 
-def tweety_pi(myMatrix, keywords, speed=1):
+def tweety_pi(keywords=["ACoLab"], delay = 15):
     """Follow list of keywords on Twitter and display it on led display"""
+    pp = pprint.PrettyPrinter(indent=4)
+
+    display_led("Tweety Pi")
+    os.system("matrix/led-matrix -d -r16 -c3 -p11 -D1 -m{delay} tweet.ppm".format(delay=delay))
+
     #Twitter key needed to connect to Twitter API
     consumer_key="WiZrpKzslTQt3Y0vyIz1qhTeU"
     consumer_secret="Smzs6IoO684EjpRlOGHvTj9JbXjdPec1rIBlA6wdYjUS0hJNh2"
@@ -33,39 +35,51 @@ def tweety_pi(myMatrix, keywords, speed=1):
                          consumer_secret)
 
     #Get the lastest tweet containing keywords
-    latest = twitter.Twitter(auth=auth).search.tweets(q=" OR ".join(keywords), 
-                                                      result_type="recent", 
-                                                      count=1)
+    latest = twitter.Twitter(auth=auth).search.tweets(q=" OR ".join(keywords))
     #Display the latest tweet text
-    if len(latest['statuses']):
-        image = create_image(latest['statuses'][0]['user']['screen_name'] + " : " + latest['statuses'][0]['text'])
-        #image = create_image("test")
-        thread_display = Display_Image(image, myMatrix, speed)
-        thread_display.start()
-        thread_display.join()
+    if latest['statuses']:
+        display_led(latest['statuses'][0]['user']['screen_name'] + \
+                           " : " + latest['statuses'][0]['text'])
+    else:
+        display_led("No recent Tweet")
+     
+    #Connect to the Stream Twitter API
+    twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
+    print "Waiting for Tweet"
+    #Iter over tweet stream containing hashtag
+    while True:
+        try:
+            for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
+                if 'text' in msg:
+                    display_led(msg['user']['screen_name'] + " : " + msg['text'])
+                print "Waiting for Tweet"
+            diplay_led("Network connection lost")
+        except Exception as e: 
+            print e
+            continue
 
-def create_image(text):
+def display_led(text):
     """Create an image corresponding to text and pass it as argument to 
     led-matrix software."""
     font = ImageFont.truetype("/usr/share/fonts/truetype/droid/DroidSans.ttf", 14)
     print "Tweet arrived : ", text
-    text_width, ignore = font.getsize(text)
+    width = 0
+    for letter in text:
+        width += font.getsize(letter)[0]
 
     #Load logo that will be paste at the begining of the picture
-    logo = Image.open("logo_16x21.ppm")
+    logo = Image.open("/home/pi/display16x32/logo_16x21.ppm")
     logo_width, ignore = logo.size
  
-    im = Image.new("RGB", (99 + logo_width + text_width + logo_width + 30, 16), "black")
+    im = Image.new("RGB", (width + (logo_width + 5) * 2, 16), "black")
     draw = ImageDraw.Draw(im)
 
-    x = 99
     #Paste the logo at the begining of the picture
-    im.paste(logo,(x, 0))
+    im.paste(logo,(0, 0))
 
     #Start text 5 pixel left to the Logo
-    x = x + logo_width + 5
-    section = (len(text) / 5) + 1
-    #section = (text_width / 5) + 1
+    x = logo_width + 5
+    section = len(text) / 5
     step = 255 / section
     i = 0
 
@@ -98,58 +112,10 @@ def create_image(text):
 
     #Paste the logo at the end of the picture
     im.paste(logo,(x + 5, 0))
-    return im
-     
-class Display_Image(Thread):
     
-    """ Thread displaying an image on the led matrix screen"""
-    
-    def __init__(self, image, myMatrix, s):
-        Thread.__init__(self)
-        self.load(image)
-        self.myMatrix = myMatrix
-        self.Terminated = False
-        self.new_image = False
-        self.speed = s
-
-    def run(self):
-        horizontal_position = 0
-	# Set speed :
-        scroll_jumps = self.speed * 2
-        scroll_ms = 1 
-        offscreen = self.myMatrix.CreateFrameCanvas()
-        im_width = self.image_width
-        im_height = self.image_height
-        screen_width = self.myMatrix.width
-        screen_height = self.myMatrix.height
-        pixl = self.pix
-        while not self.Terminated:
-            for x, y in itertools.product(range(screen_width), range(screen_height)):
-                r, g, b = pixl[(horizontal_position + x) % im_width + y * im_width]
-                offscreen.SetPixel(x, y, r, g, b)
-            offscreen = self.myMatrix.SwapOnVSync(offscreen)
-            horizontal_position += scroll_jumps
-            if horizontal_position > im_width:
-		self.stop()
-            if horizontal_position < 0:
-                horizontal_position = im_width
-    
-    def stop(self):
-        self.Terminated = 1
-    
-    def load(self, image):
-        self.pix = list(image.getdata())
-        self.image_width, self.image_height = image.size
-        self.new_image = True
+    im.save("tweet.ppm")
 
 if __name__ == '__main__':
-    #Initiate led matrix screen size
-    rows = 16
-    chains = 3
-    parallel = 1
-    myMatrix = RGBMatrix(rows, chains, parallel)
-    myMatrix.pwmBits = 11
     with open('config.json') as data_file:    
         config = json.load(data_file)
-    while 1:
-        tweety_pi(myMatrix, config["keywords"], config['speed']) 
+    tweety_pi(config["keywords"], config['delay']) 
