@@ -22,34 +22,34 @@ def tweety_pi(keywords=["ACoLab"], delay = 15):
     display_led("Tweety Pi")
     os.system("matrix/led-matrix -d -r16 -c3 -p11 -D1 -m{delay} tweet.ppm".format(delay=delay))
 
-    #Twitter key needed to connect to Twitter API
-    consumer_key="WiZrpKzslTQt3Y0vyIz1qhTeU"
-    consumer_secret="Smzs6IoO684EjpRlOGHvTj9JbXjdPec1rIBlA6wdYjUS0hJNh2"
-    access_token_key="2243641387-8TtZVCnI9dk5T2suMiQTaXREDy3iYdwNLiCDzFx"
-    access_token_secret="yPVbvgRf757IQA6DSetajTXL05NTHkFDImYJBiuSbYUD9"
-
-    #Twitter Authentification
-    auth = twitter.OAuth(access_token_key,
-                         access_token_secret,
-                         consumer_key,
-                         consumer_secret)
-
-    #Get the lastest tweet containing keywords
-    latest = twitter.Twitter(auth=auth).search.tweets(q=" OR ".join(keywords))
-    #Display the latest tweet text
-    if latest['statuses']:
-        display_led(latest['statuses'][0]['user']['screen_name'] + \
-                           " : " + latest['statuses'][0]['text'])
-    else:
-        display_led("No recent Tweet")
-     
-    #Connect to the Stream Twitter API
-    twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
-    print "Waiting for Tweet"
-    #Iter over tweet stream containing hashtag
     while True:
         try:
-            for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
+            #Twitter key needed to connect to Twitter API
+            consumer_key="WiZrpKzslTQt3Y0vyIz1qhTeU"
+            consumer_secret="Smzs6IoO684EjpRlOGHvTj9JbXjdPec1rIBlA6wdYjUS0hJNh2"
+            access_token_key="2243641387-8TtZVCnI9dk5T2suMiQTaXREDy3iYdwNLiCDzFx"
+            access_token_secret="yPVbvgRf757IQA6DSetajTXL05NTHkFDImYJBiuSbYUD9"
+
+            #Twitter Authentification
+            auth = twitter.OAuth(access_token_key,
+                                 access_token_secret,
+                                 consumer_key,
+                                 consumer_secret)
+
+            #Get the lastest tweet containing keywords
+            latest = twitter.Twitter(auth=auth).search.tweets(q=" OR ".join(keywords))
+            #Display the latest tweet text
+            if latest['statuses']:
+                display_led(latest['statuses'][0]['user']['screen_name'] + \
+                                   " : " + latest['statuses'][0]['text'])
+            else:
+                display_led("No recent Tweet")
+             
+            #Connect to the Stream Twitter API
+            twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
+            print "Waiting for Tweet"
+            #Iter over tweet stream containing hashtag
+            for msg in twitter_stream.statuses.filter(track=" OR ".join(keywords)):
                 if 'text' in msg:
                     display_led(msg['user']['screen_name'] + " : " + msg['text'])
                 print "Waiting for Tweet"
@@ -85,26 +85,31 @@ def display_led(text):
 
     for letter in text:
         #Create color shading from Blue to Green to Red to Magenta
-        if i < section:
-            R = 0
-            G = step * i
-            B = 255
-        elif section <= i < 2*section:
-            R = 0
-            G = 255
-            B = 255 - step * (i - section)
-        elif 2*section <= i <= 3*section:
-            R = step * (i - 2*section)
-            G = 255
-            B = 0
-        elif 3*section <= i <= 4*section:
-            R = 255
-            G = 255 - step * (i - 3*section)
-            B = 0
-        elif 4*section <= i <= 5*section:
-            R = 255
-            G = 0
-            B = step * (i - 4*section)
+        if len(text) > 10:
+            if i < section:
+                R = 0
+                G = step * i
+                B = 255
+            elif section <= i < 2*section:
+                R = 0
+                G = 255
+                B = 255 - step * (i - section)
+            elif 2*section <= i <= 3*section:
+                R = step * (i - 2*section)
+                G = 255
+                B = 0
+            elif 3*section <= i <= 4*section:
+                R = 255
+                G = 255 - step * (i - 3*section)
+                B = 0
+            elif 4*section <= i <= 5*section:
+                R = 255
+                G = 0
+                B = step * (i - 4*section)
+        else:
+            R = 43
+            G = 136
+            B = 201
 
         draw.text((x, 0), letter, fill=(R, G, B), font=font)
         x = x + font.getsize(letter)[0]
