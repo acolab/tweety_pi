@@ -34,7 +34,7 @@ def tweety_pi(keywords=["ACoLab"]):
     else:
         display_led("No recent Tweet")
      
-    os.system("matrix/led-matrix -d -r16 -c3 -p11 -D1 tweet.ppm")
+    os.system("matrix/led-matrix -d -r16 -c3 -p11 -D1 -m15 tweet.ppm")
 
     #Connect to the Stream Twitter API
     twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
@@ -51,13 +51,15 @@ def display_led(text):
     led-matrix software."""
     font = ImageFont.truetype("/usr/share/fonts/truetype/droid/DroidSans.ttf", 14)
     print "Tweet arrived : ", text
-    width, ignore = font.getsize(text)
+    width = 0
+    for letter in text:
+        width += font.getsize(letter)[0]
 
     #Load logo that will be paste at the begining of the picture
     logo = Image.open("/home/pi/display16x32/logo_16x21.ppm")
     logo_width, ignore = logo.size
  
-    im = Image.new("RGB", (width + logo_width + 90, 16), "black")
+    im = Image.new("RGB", (width + (logo_width + 5) * 2, 16), "black")
     draw = ImageDraw.Draw(im)
 
     #Paste the logo at the begining of the picture
