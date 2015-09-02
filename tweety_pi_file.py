@@ -13,6 +13,10 @@ from PIL import ImageDraw
 def tweety_pi(keywords=["ACoLab"]):
     """Follow list of keywords on Twitter and display it on led display"""
     pp = pprint.PrettyPrinter(indent=4)
+
+    display_led("Tweety Pi")
+    os.system("matrix/led-matrix -d -r16 -c3 -p11 -D1 -m15 tweet.ppm")
+
     #Twitter key needed to connect to Twitter API
     consumer_key="WiZrpKzslTQt3Y0vyIz1qhTeU"
     consumer_secret="Smzs6IoO684EjpRlOGHvTj9JbXjdPec1rIBlA6wdYjUS0hJNh2"
@@ -34,17 +38,20 @@ def tweety_pi(keywords=["ACoLab"]):
     else:
         display_led("No recent Tweet")
      
-    os.system("matrix/led-matrix -d -r16 -c3 -p11 -D1 -m15 tweet.ppm")
-
     #Connect to the Stream Twitter API
     twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
     print "Waiting for Tweet"
     #Iter over tweet stream containing hashtag
-    for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
-        if 'text' in msg:
-            display_led(msg['user']['screen_name'] + " : " + msg['text'])
-        print "Waiting for Tweet"
-    diplay_led("Network connection lost")
+    while True:
+        try:
+            for msg in twitter_stream.statuses.filter(track=",".join(keywords)):
+                if 'text' in msg:
+                    display_led(msg['user']['screen_name'] + " : " + msg['text'])
+                print "Waiting for Tweet"
+            diplay_led("Network connection lost")
+        except Exception as e: 
+            print e
+            continue
 
 def display_led(text):
     """Create an image corresponding to text and pass it as argument to 
