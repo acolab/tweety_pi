@@ -1,0 +1,17 @@
+[Unit]
+Description=Tweety Pi
+After=network-online.target
+ 
+[Service]
+Type=simple
+ 
+User=root
+Group=root
+ 
+ExecStart=/home/pi/tweety_pi/env/bin/python /home/pi/tweety_pi/tweety_pi.py 
+WorkingDirectory=/home/pi/tweety_pi
+ 
+Restart=on-failure
+ 
+[Install]
+WantedBy=multi-user.target
