@@ -68,7 +68,7 @@ def display_led(text):
         width += font.getsize(letter)[0]
 
     #Load logo that will be paste at the begining of the picture
-    logo = Image.open("/home/pi/display16x32/logo_16x21.ppm")
+    logo = Image.open("./logo_16x21.ppm")
     logo_width, ignore = logo.size
  
     im = Image.new("RGB", (width + (logo_width + 5) * 2, 16), "black")
