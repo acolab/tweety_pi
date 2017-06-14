@@ -1,0 +1,5 @@
+Pillow==4.1.1
+argparse==1.2.1
+olefile==0.44
+twitter==1.17.1
+wsgiref==0.1.2
