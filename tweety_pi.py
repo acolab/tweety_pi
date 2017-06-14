@@ -61,7 +61,7 @@ def tweety_pi(keywords=["ACoLab"], delay = 15):
 def display_led(text):
     """Create an image corresponding to text and pass it as argument to 
     led-matrix software."""
-    font = ImageFont.truetype("/usr/share/fonts/truetype/droid/DroidSans.ttf", 14)
+    font = ImageFont.truetype("./DroidSans.ttf", 14)
     print "Tweet arrived : ", text
     width = 0
     for letter in text:
