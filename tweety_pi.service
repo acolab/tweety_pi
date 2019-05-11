@@ -8,7 +8,7 @@ Type=simple
 User=root
 Group=root
  
-ExecStart=/home/pi/tweety_pi/env/bin/python -u /home/pi/tweety_pi/tweety_pi.py 
+ExecStart=/home/pi/tweety_pi/env/bin/python -u /home/pi/tweety_pi/tweety_pi.py
 WorkingDirectory=/home/pi/tweety_pi
  
 Restart=on-failure
