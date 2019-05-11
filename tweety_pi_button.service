@@ -1,0 +1,17 @@
+[Unit]
+Description=Tweety Pi Button
+After=network-online.target
+ 
+[Service]
+Type=simple
+ 
+User=pi
+Group=pi
+ 
+ExecStart=/home/pi/tweety_pi/env/bin/python -u /home/pi/tweety_pi/button.py /home/pi/tweety_pi/twitter_acolabfr_button.yaml
+WorkingDirectory=/home/pi/tweety_pi
+ 
+Restart=no
+ 
+[Install]
+WantedBy=multi-user.target
