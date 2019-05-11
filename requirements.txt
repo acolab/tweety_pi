@@ -1,5 +1,7 @@
 Pillow==4.1.1
+PyYAML==3.12
+RPi.GPIO==0.6.3
 argparse==1.2.1
 olefile==0.44
-twitter==1.17.1
+twitter==1.18.0
 wsgiref==0.1.2
