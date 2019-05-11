@@ -1,6 +1,11 @@
 [Unit]
 Description=Tweety Pi Button
+
+# https://raspberrypi.stackexchange.com/questions/94635/how-can-i-delay-the-startup-of-systemd-services-until-the-datetime-is-set-no-rt
+After=time-sync.target
+
 After=network-online.target
+Requires=network-online.target
  
 [Service]
 Type=simple
