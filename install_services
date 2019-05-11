@@ -1,0 +1,10 @@
+#!/bin/bash
+
+set -eux
+
+for i in tweety_pi_button.service tweety_pi.service
+do
+  sudo cp $i /etc/systemd/system/$i
+done
+
+sudo systemctl daemon-reload
