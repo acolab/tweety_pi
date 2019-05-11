@@ -15,7 +15,7 @@ from PIL import ImageFont
 from PIL import Image
 from PIL import ImageDraw
 
-def tweety_pi(keywords=["ACoLab"], delay = 15):
+def tweety_pi(keywords=["ACoLab", "acolabfr"], delay = 15):
     """Follow list of keywords on Twitter and display it on led display"""
     pp = pprint.PrettyPrinter(indent=4)
 
@@ -46,10 +46,12 @@ def tweety_pi(keywords=["ACoLab"], delay = 15):
                 display_led("No recent Tweet")
              
             #Connect to the Stream Twitter API
-            twitter_stream = twitter.TwitterStream(auth=auth, secure=True)
+            twitter_stream = twitter.TwitterStream(auth=auth, 
+                                          secure=True) 
+            iterator = twitter_stream.statuses.filter(track=",".join(keywords))
             print "Waiting for Tweet"
             #Iter over tweet stream containing hashtag
-            for msg in twitter_stream.statuses.filter(track=" OR ".join(keywords)):
+            for msg in iterator:
                 if 'text' in msg:
                     display_led(msg['user']['screen_name'] + " : " + msg['text'])
                 print "Waiting for Tweet"
@@ -62,6 +64,7 @@ def display_led(text):
     """Create an image corresponding to text and pass it as argument to 
     led-matrix software."""
     font = ImageFont.truetype("./DroidSans.ttf", 14)
+    text = text.encode('ISO-8859-15', errors='replace')
     print "Tweet arrived : ", text
     width = 0
     for letter in text:

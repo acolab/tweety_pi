@@ -1,0 +1,3 @@
+#!/bin/bash
+
+exec /home/pi/tweety_pi/env/bin/python -u /home/pi/tweety_pi/tweety_pi.py
